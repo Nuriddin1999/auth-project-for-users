@@ -1,7 +1,8 @@
-.env
-.vscode/
-.idea/
-.DS_Store
-
-# Personal notes, not part of the solution
-Auth_Project_Guide.pdf
+**/node_modules/
+**/dist/
+**/venv/
+**/.venv/
+**/__pycache__/
+**/.env
+**/.env.*
+!**/.env.example
