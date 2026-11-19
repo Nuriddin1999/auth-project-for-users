@@ -44,7 +44,10 @@ export interface TelegramUser {
 /** Test mode, step 2: the email / Telegram username entered on /connect plus the code. */
 export type MockPayload = { mock: true; identity: string; code: string };
 
-export type LoginPayload = { credential: string } | { access_token: string } | TelegramUser | MockPayload;
+/** Facebook stand-in until the Facebook app is set up: email + emailed code. */
+export type EmailCodePayload = { email: string; code: string };
+
+export type LoginPayload = { credential: string } | { access_token: string } | TelegramUser | MockPayload | EmailCodePayload;
 
 export interface ProviderButtonProps {
   onSuccess: (payload: LoginPayload) => void;
@@ -96,4 +99,22 @@ export interface SignUpConfirmed {
   detail: string;
   email: string;
   created: boolean;
+}
+
+/** Response of /auth/telegram/login/start/: open bot_link, press button_text there, enter the code. */
+export interface TelegramLoginStart {
+  token: string;
+  bot_username: string;
+  bot_link: string;
+  /** The bot's "Get sign-in code" button. */
+  button_text: string;
+  /** Seconds the sign-in page session stays usable. */
+  expires_in: number;
+  code_length: number;
+}
+
+/** Response of /auth/telegram/login/status/ (polled while the page is open). */
+export interface TelegramLoginStatus {
+  status: "active";
+  expires_in: number;
 }

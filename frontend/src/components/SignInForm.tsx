@@ -1,9 +1,10 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import { authErrorMessage } from "./authErrors";
 import PasswordInput from "./PasswordInput";
 import { isEmail, isFilled } from "../validation";
+import { ui } from "../ui";
 
 interface Props {
   prefillEmail?: string;
@@ -36,11 +37,11 @@ export default function SignInForm({ prefillEmail = "", focusPassword = false, o
   };
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
-      <label className="field">
+    <form className={ui.form} onSubmit={handleSubmit}>
+      <label className={ui.field}>
         <span>Email</span>
         <input
-          className="input"
+          className={ui.input}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -55,24 +56,25 @@ export default function SignInForm({ prefillEmail = "", focusPassword = false, o
           label="Password"
           value={password}
           onChange={setPassword}
+          placeholder="Enter your password"
           autoComplete="current-password"
           autoFocus={focusPassword}
           required
         />
-        <div className="field-link">
-          <Link to="/forgot-password" state={{ email: email.trim() }}>
+        <div className="mt-1.5 text-right text-[0.9rem]">
+          <Link className={ui.link} to="/forgot-password" state={{ email: email.trim() }}>
             Forgot password?
           </Link>
         </div>
       </div>
 
       {error && (
-        <p className="error" role="alert">
+        <p className={ui.error} role="alert">
           {error}
         </p>
       )}
 
-      <button className="btn btn-primary" type="submit" disabled={busy || !canSubmit}>
+      <button className={ui.primary} type="submit" disabled={busy || !canSubmit}>
         {busy ? "Signing in…" : "Sign in"}
       </button>
     </form>

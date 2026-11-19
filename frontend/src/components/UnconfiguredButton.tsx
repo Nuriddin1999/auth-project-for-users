@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useLocation, useNavigate, type Location } from "react-router-dom";
+import { useOpenAuthPage } from "../auth/useOpenAuthPage";
 import { config } from "../config";
 import type { Provider, ProviderButtonProps } from "../types";
 
@@ -13,26 +13,23 @@ interface Props extends Pick<ProviderButtonProps, "onError"> {
 
 /**
  * Button for a provider whose keys are missing.
- * Test mode: opens /connect/<provider>, which asks for an email / Telegram username and a code.
- * Otherwise: explains what to configure.
+ * Test mode, or Facebook with the email stand-in: opens /connect/<provider>, which asks for
+ * an email (or Telegram username) and a code. Otherwise: explains what to configure.
  */
 export default function UnconfiguredButton({ provider, name, env, onError, className, icon }: Props) {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const openAuthPage = useOpenAuthPage();
 
   const handleClick = () => {
-    if (!config.mockAuth) {
+    const emailFallback = provider === "facebook" && config.facebookEmailFallback;
+    if (!config.mockAuth && !emailFallback) {
       onError(`${name} is not configured: set ${env} in frontend/.env and restart "npm run dev"`);
       return;
     }
-    // Come back to where the user wanted to go (from sign in / sign up) or to this page (profile).
-    const onAuthPage = ["/login", "/signup"].includes(location.pathname);
-    const from = onAuthPage ? (location.state as { from?: Location } | null)?.from : location;
-    navigate(`/connect/${provider}`, { state: { from } });
+    openAuthPage(`/connect/${provider}`);
   };
 
   return (
-    <button type="button" className={`btn ${className}`} onClick={handleClick}>
+    <button type="button" className={className} onClick={handleClick}>
       {icon}
       Continue with {name}
     </button>

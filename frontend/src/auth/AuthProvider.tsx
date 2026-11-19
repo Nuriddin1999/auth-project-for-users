@@ -1,44 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api, refreshAccessToken, setOnAuthLost } from "../api/client";
-import type {
-  AuthResponse,
-  CodeSent,
-  EmailPurpose,
-  LoginPayload,
-  MockCodeSent,
-  Provider,
-  SignUpConfirmed,
-  SignUpData,
-  User,
-} from "../types";
+import type { AuthResponse, CodeSent, MockCodeSent, SignUpConfirmed, TelegramLoginStart, TelegramLoginStatus, User } from "../types";
 import { tokens } from "./tokens";
-
-interface IAuthContextValue {
-  user: User | null;
-  loading: boolean;
-  /** Social login. When already logged in, the backend links the provider to the current user. */
-  loginWith: (provider: Provider, payload: LoginPayload) => Promise<AuthResponse>;
-  /** Email + password sign in. */
-  loginWithPassword: (email: string, password: string) => Promise<AuthResponse>;
-  /** Sign up, step 1: sends a code to the email. The account is created after the code is confirmed. */
-  signUp: (data: SignUpData) => Promise<CodeSent>;
-  /** Sign up, step 2: confirm the code -> account created. Does not sign in: the user signs in afterwards. */
-  confirmSignUp: (email: string, code: string) => Promise<SignUpConfirmed>;
-  /** Forgot password, step 1: sends a code to the email. */
-  requestPasswordReset: (email: string) => Promise<CodeSent>;
-  /** Forgot password, step 2: confirm the code -> token for choosing a new password. */
-  verifyPasswordReset: (email: string, code: string) => Promise<string>;
-  /** Forgot password, step 3: set the new password -> signed in. */
-  resetPassword: (token: string, password: string, passwordConfirm: string) => Promise<AuthResponse>;
-  /** Send a new code for a pending sign up / password reset. */
-  resendCode: (purpose: EmailPurpose, email: string) => Promise<CodeSent>;
-  /** Test mode: "send" a code for a provider without keys (email or Telegram username). */
-  startMockLogin: (provider: Provider, identity: string) => Promise<MockCodeSent>;
-  disconnect: (provider: Provider) => Promise<void>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<IAuthContextValue | null>(null);
+import { AuthContext, type IAuthContextValue } from "./context";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -80,8 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (await post<{ reset_token: string }>("/auth/password/reset/verify/", { email, code })).reset_token,
       resetPassword: (token, password, passwordConfirm) =>
         postSession("/auth/password/reset/confirm/", { token, password, password_confirm: passwordConfirm }),
+      startTelegramLogin: () => post<TelegramLoginStart>("/auth/telegram/login/start/", {}),
+      telegramLoginStatus: (token) => post<TelegramLoginStatus>("/auth/telegram/login/status/", { token }),
+      verifyTelegramLogin: (token, code) => postSession("/auth/telegram/login/verify/", { token, code }),
       resendCode: (purpose, email) => post<CodeSent>("/auth/email/resend/", { purpose, email }),
       startMockLogin: (provider, identity) => post<MockCodeSent>(`/auth/${provider}/`, { mock: true, identity }),
+      startFacebookEmailLogin: (email) => post<MockCodeSent>("/auth/facebook/", { email }),
       disconnect: async (provider) => setUser((await api.delete<User>(`/auth/social/${provider}/`)).data),
       logout: async () => {
         await api.post("/auth/logout/").catch(() => {}); // blacklists the token and clears the cookie
@@ -93,10 +61,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user, loading, postSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth(): IAuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
-  return ctx;
 }

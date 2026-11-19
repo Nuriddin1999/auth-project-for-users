@@ -53,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'email', 'social_accounts', 'date_joined')
 
-    def get_avatar_url(self, user):
+    def get_avatar_url(self, user) -> str:
         for account in user.social_accounts.all():
             if account.avatar_url:
                 return account.avatar_url
@@ -118,3 +118,13 @@ class MockSocialSerializer(serializers.Serializer):
 
     identity = serializers.CharField(max_length=254)
     code = serializers.CharField(max_length=8)
+
+
+class TelegramLoginTokenSerializer(serializers.Serializer):
+    token = serializers.RegexField(r'^[A-Za-z0-9_-]{16,64}$')
+
+
+class TelegramLoginVerifySerializer(TelegramLoginTokenSerializer):
+    code = serializers.RegexField(
+        r'^\s*\d{6}\s*$', error_messages={'invalid': 'Enter the 6-digit code'}
+    )

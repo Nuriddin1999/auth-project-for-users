@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import AuthCard from "./AuthCard";
+import { cx, ui } from "../ui";
 
 const REDIRECT_DELAY = 1500;
 
@@ -24,14 +25,21 @@ export default function AuthSuccess({
 
   return (
     <AuthCard title={title}>
-      <div className="success-screen" role="status">
-        <svg className="success-icon" viewBox="0 0 52 52" aria-hidden="true">
-          <circle cx="26" cy="26" r="24" />
-          <path d="M15 27l7 7 15-15" />
+      <div className="flex flex-col items-center gap-3 text-center" role="status">
+        <svg
+          className="size-16 fill-none stroke-success stroke-3 [stroke-linecap:round] [stroke-linejoin:round]"
+          viewBox="0 0 52 52"
+          aria-hidden="true"
+        >
+          <circle className="[stroke-opacity:0.3]" cx="26" cy="26" r="24" />
+          <path
+            className="animate-draw-check [stroke-dasharray:40] [stroke-dashoffset:40] motion-reduce:animate-none motion-reduce:[stroke-dashoffset:0]"
+            d="M15 27l7 7 15-15"
+          />
         </svg>
         <p>{message}</p>
-        <p className="muted">Redirecting…</p>
-        <button type="button" className="btn btn-primary" onClick={onContinue}>
+        <p className="text-muted">Redirecting…</p>
+        <button type="button" className={cx(ui.primary, "mt-2")} onClick={onContinue}>
           {continueLabel}
         </button>
       </div>

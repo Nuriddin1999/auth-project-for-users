@@ -1,9 +1,10 @@
 import { useCallback, useState } from "react";
 import { errorMessage } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import type { LoginPayload, Provider } from "../types";
 import ProviderButton from "./ProviderButton";
 import { PROVIDERS } from "./providers";
+import { cx } from "../ui";
 
 interface Props {
   /** Called after a successful sign in / sign up. */
@@ -37,7 +38,7 @@ export default function SocialButtons({ onDone, onError }: Props) {
   );
 
   return (
-    <div className={`providers ${busy ? "is-busy" : ""}`}>
+    <div className={cx("flex flex-col items-center gap-3 *:w-[280px]", busy && "pointer-events-none opacity-60")}>
       {PROVIDERS.map((p) => (
         <ProviderButton key={p.id} provider={p.id} onSuccess={handle(p.id)} onError={onError} text="continue_with" />
       ))}

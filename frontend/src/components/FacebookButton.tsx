@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { config } from "../config";
 import type { ProviderButtonProps } from "../types";
 import UnconfiguredButton from "./UnconfiguredButton";
+import { ui } from "../ui";
 
 let sdkPromise: Promise<FacebookSdk> | null = null;
 
@@ -46,7 +47,7 @@ export default function FacebookButton({ onSuccess, onError, label = "Continue w
         env="VITE_FACEBOOK_APP_ID"
         provider="facebook"
         onError={onError}
-        className="btn-facebook"
+        className={ui.facebook}
         icon={<FacebookIcon />}
       />
     );
@@ -72,7 +73,7 @@ export default function FacebookButton({ onSuccess, onError, label = "Continue w
   };
 
   return (
-    <button className="btn btn-facebook" onClick={handleClick}>
+    <button className={ui.facebook} onClick={handleClick}>
       <FacebookIcon />
       {label}
     </button>

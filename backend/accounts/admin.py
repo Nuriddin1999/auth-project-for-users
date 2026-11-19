@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import EmailCode, SocialAccount
+from .models import EmailCode, SocialAccount, TelegramChat
 
 
 @admin.register(SocialAccount)
@@ -17,3 +17,9 @@ class EmailCodeAdmin(admin.ModelAdmin):
     list_filter = ('purpose',)
     search_fields = ('email',)
     readonly_fields = ('code_hash',)
+
+
+@admin.register(TelegramChat)
+class TelegramChatAdmin(admin.ModelAdmin):
+    list_display = ('username', 'telegram_id', 'first_name', 'last_name', 'updated_at')
+    search_fields = ('username', 'first_name', 'last_name')

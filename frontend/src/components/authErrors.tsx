@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { errorCode, errorMessage } from "../api/client";
+import { ui } from "../ui";
 
 /** Error text for auth forms, with a link to the right page for "wrong page" errors. */
 export function authErrorMessage(error: unknown, email: string): ReactNode {
@@ -9,7 +10,7 @@ export function authErrorMessage(error: unknown, email: string): ReactNode {
       return (
         <>
           No account with this email.{" "}
-          <Link to="/signup" state={{ email }}>
+          <Link className={ui.link} to="/signup" state={{ email }}>
             Sign up
           </Link>
         </>
@@ -18,7 +19,7 @@ export function authErrorMessage(error: unknown, email: string): ReactNode {
       return (
         <>
           An account with this email already exists.{" "}
-          <Link to="/login" state={{ email }}>
+          <Link className={ui.link} to="/login" state={{ email }}>
             Sign in
           </Link>
         </>

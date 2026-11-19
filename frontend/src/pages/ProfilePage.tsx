@@ -1,10 +1,11 @@
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { errorMessage } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import ProviderButton from "../components/ProviderButton";
 import { PROVIDERS } from "../components/providers";
 import type { LoginPayload, Provider, SocialAccount } from "../types";
+import { cx, ui } from "../ui";
 
 export default function ProfilePage() {
   const { user, loginWith, disconnect, logout } = useAuth();
@@ -29,40 +30,42 @@ export default function ProfilePage() {
   const fullName = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username;
 
   return (
-    <main className="card">
-      <div className="profile-head">
+    <main className={ui.card}>
+      <div className="flex items-center gap-4">
         {user.avatar_url ? (
-          <img className="avatar" src={user.avatar_url} alt="" referrerPolicy="no-referrer" />
+          <img className="size-16 flex-none rounded-full object-cover" src={user.avatar_url} alt="" referrerPolicy="no-referrer" />
         ) : (
-          <div className="avatar avatar-placeholder">{fullName[0]?.toUpperCase()}</div>
+          <div className="grid size-16 flex-none place-items-center rounded-full bg-accent text-2xl text-white">
+            {fullName[0]?.toUpperCase()}
+          </div>
         )}
         <div>
-          <h1>{fullName}</h1>
-          <p className="muted">
+          <h1 className={ui.title}>{fullName}</h1>
+          <p className="text-muted">
             @{user.username}
             {user.email && ` · ${user.email}`}
           </p>
         </div>
       </div>
 
-      <h2>Sign-in methods</h2>
-      <ul className="accounts">
+      <h2 className={ui.heading}>Sign-in methods</h2>
+      <ul>
         {user.email && (
-          <li>
-            <span className="account-name">Password</span>
-            <span className={user.has_password ? "badge" : "badge badge-muted"}>{user.has_password ? "Set" : "Not set"}</span>
-            <Link className="btn-link" to="/forgot-password" state={{ email: user.email, from: { pathname: "/" } }}>
+          <li className="flex flex-wrap items-center gap-3 border-t border-line py-3 [&>:last-child]:ml-auto">
+            <span className="min-w-20 font-medium">Password</span>
+            <span className={user.has_password ? ui.badge : ui.badgeMuted}>{user.has_password ? "Set" : "Not set"}</span>
+            <Link className={ui.link} to="/forgot-password" state={{ email: user.email, from: { pathname: "/" } }}>
               {user.has_password ? "Change" : "Set password"}
             </Link>
           </li>
         )}
         {PROVIDERS.map((p) => (
-          <li key={p.id}>
-            <span className="account-name">{p.name}</span>
+          <li key={p.id} className="flex flex-wrap items-center gap-3 border-t border-line py-3 [&>:last-child]:ml-auto">
+            <span className="min-w-20 font-medium">{p.name}</span>
             {linked[p.id] ? (
               <>
-                <span className="badge">Connected</span>
-                <button className="btn btn-link" onClick={() => run(() => disconnect(p.id))}>
+                <span className={ui.badge}>Connected</span>
+                <button className={ui.linkButton} onClick={() => run(() => disconnect(p.id))}>
                   Disconnect
                 </button>
               </>
@@ -74,12 +77,12 @@ export default function ProfilePage() {
       </ul>
 
       {error && (
-        <p className="error" role="alert">
+        <p className={cx(ui.error, "mt-4")} role="alert">
           {error}
         </p>
       )}
 
-      <button className="btn btn-outline" onClick={logout}>
+      <button className={cx(ui.outline, "mt-6")} onClick={logout}>
         Log out
       </button>
     </main>

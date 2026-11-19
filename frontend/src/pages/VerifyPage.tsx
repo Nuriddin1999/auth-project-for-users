@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Navigate, useLocation, useNavigate, type Location } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import AuthCard from "../components/AuthCard";
 import AuthSuccess from "../components/AuthSuccess";
 import CodeStep from "../components/CodeStep";

@@ -81,6 +81,23 @@ def resolve_user(profile: SocialProfile, current_user=None):
     return user, created
 
 
+@transaction.atomic
+def get_or_create_email_user(email: str):
+    """User for an email proven with a code (no provider link). Returns (user, created)."""
+    user = User.objects.filter(email__iexact=email).first()
+    if user:
+        return user, False
+    local = email.split('@')[0]
+    user = User(
+        username=unique_username(local, 'email', email),
+        email=email,
+        first_name=local.replace('.', ' ').replace('_', ' ').title()[:150],
+    )
+    user.set_unusable_password()
+    user.save()
+    return user, True
+
+
 def _update_account(account: SocialAccount, profile: SocialProfile):
     account.avatar_url = profile.avatar_url[:1000]
     account.extra_data = profile.extra

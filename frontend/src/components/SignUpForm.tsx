@@ -1,10 +1,11 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate, type Location } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import type { VerifyState } from "../pages/VerifyPage";
 import { authErrorMessage } from "./authErrors";
 import PasswordInput from "./PasswordInput";
 import { MIN_PASSWORD_LENGTH, isEmail, isFilled, isNewPasswordValid, passwordLengthHint } from "../validation";
+import { ui } from "../ui";
 
 interface Props {
   prefillEmail?: string;
@@ -52,11 +53,11 @@ export default function SignUpForm({ prefillEmail = "", prefillName = "", from }
   };
 
   return (
-    <form className="form" onSubmit={handleSubmit}>
-      <label className="field">
+    <form className={ui.form} onSubmit={handleSubmit}>
+      <label className={ui.field}>
         <span>Name</span>
         <input
-          className="input"
+          className={ui.input}
           value={name}
           onChange={(e) => setName(e.target.value)}
           autoComplete="name"
@@ -65,10 +66,10 @@ export default function SignUpForm({ prefillEmail = "", prefillName = "", from }
           required
         />
       </label>
-      <label className="field">
+      <label className={ui.field}>
         <span>Email</span>
         <input
-          className="input"
+          className={ui.input}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -88,7 +89,7 @@ export default function SignUpForm({ prefillEmail = "", prefillName = "", from }
         aria-invalid={Boolean(lengthHint)}
         required
       />
-      {lengthHint && <p className="error field-error">{lengthHint}</p>}
+      {lengthHint && <p className={ui.fieldError}>{lengthHint}</p>}
       <PasswordInput
         label="Confirm password"
         value={confirm}
@@ -98,15 +99,15 @@ export default function SignUpForm({ prefillEmail = "", prefillName = "", from }
         aria-invalid={mismatch}
         required
       />
-      {mismatch && <p className="error field-error">Passwords do not match</p>}
+      {mismatch && <p className={ui.fieldError}>Passwords do not match</p>}
 
       {error && (
-        <p className="error" role="alert">
+        <p className={ui.error} role="alert">
           {error}
         </p>
       )}
 
-      <button className="btn btn-primary" type="submit" disabled={busy || !canSubmit}>
+      <button className={ui.primary} type="submit" disabled={busy || !canSubmit}>
         {busy ? "Creating account…" : "Create account"}
       </button>
     </form>

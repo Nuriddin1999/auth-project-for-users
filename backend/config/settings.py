@@ -19,8 +19,12 @@ def env_list(name, default=''):
     return [item.strip() for item in os.getenv(name, default).split(',') if item.strip()]
 
 
+def env_bool(name, default='False'):
+    return os.getenv(name, default).lower() in ('1', 'true', 'yes')
+
+
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-only-change-me')
-DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
+DEBUG = env_bool('DJANGO_DEBUG', 'True')
 ALLOWED_HOSTS = env_list('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1')
 
 
@@ -34,6 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
+    'drf_spectacular',
     'accounts',
 ]
 
@@ -102,6 +107,23 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAuthenticated',),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    # Per-endpoint limits (accounts/throttles.py), counted per IP in the cache.
+    'DEFAULT_THROTTLE_RATES': {
+        'social_login': '30/min',
+        'email_code': '20/min',
+        'password_login': '10/min',
+        'telegram_login': '120/min',  # the Telegram page polls every 2 s
+        'telegram_verify': '10/min',
+    },
+}
+
+# OpenAPI schema at /api/schema/, Swagger UI at /api/docs/
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Auth API',
+    'DESCRIPTION': 'Sign in with Google, Facebook, Telegram or email + password.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 SIMPLE_JWT = {
@@ -124,13 +146,19 @@ GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
 FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID', '')
 FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET', '')
 FACEBOOK_GRAPH_VERSION = os.getenv('FACEBOOK_GRAPH_VERSION', 'v21.0')
+# Until the Facebook app is set up: "Continue with Facebook" signs in with an emailed code.
+# Switches off by itself once FACEBOOK_APP_ID is set. Works with DEBUG=False (real emails).
+FACEBOOK_EMAIL_FALLBACK = env_bool('FACEBOOK_EMAIL_FALLBACK')
 
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
+# Production: set it (long random string) and run `manage.py telegram_webhook --url ...`;
+# Telegram then pushes bot messages to /api/auth/telegram/webhook/. Empty = getUpdates polling.
+TELEGRAM_WEBHOOK_SECRET = os.getenv('TELEGRAM_WEBHOOK_SECRET', '')
 # Telegram login payloads older than this (seconds) are rejected (replay protection).
 TELEGRAM_AUTH_MAX_AGE = int(os.getenv('TELEGRAM_AUTH_MAX_AGE', '86400'))
 
 # --- Email sign-up / sign-in (one-time codes) ---------------------------
-EMAIL_CODE_TTL = int(os.getenv('EMAIL_CODE_TTL') or 60)  # seconds a code stays valid
+EMAIL_CODE_TTL = int(os.getenv('EMAIL_CODE_TTL') or 120)  # seconds a code stays valid
 EMAIL_CODE_LENGTH = 6
 # Development only (ignored unless DEBUG): every code is this value and no email is sent.
 # Lets you sign up without a working SMTP server. Example: EMAIL_TEST_CODE=12345
@@ -170,6 +198,38 @@ else:
 
 # Test mode: accept {"mock": true} on the login endpoints and sign in fake users
 # WITHOUT contacting the providers. Only ever active together with DEBUG.
-SOCIAL_AUTH_MOCK = DEBUG and os.getenv('SOCIAL_AUTH_MOCK', 'False').lower() in ('1', 'true', 'yes')
+SOCIAL_AUTH_MOCK = DEBUG and env_bool('SOCIAL_AUTH_MOCK')
 # Code that "confirms" a social login in test mode (nothing is really sent).
 SOCIAL_AUTH_MOCK_CODE = os.getenv('SOCIAL_AUTH_MOCK_CODE') or '12345'
+
+
+# --- Cache ----------------------------------------------------------------
+# Login codes, Telegram sign-in sessions and rate limits live in the cache, so every server
+# process must share it: use Redis in production (REDIS_URL=redis://localhost:6379/0).
+# Without REDIS_URL a per-process memory cache is used - fine for `runserver` and tests.
+if os.getenv('REDIS_URL'):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL'),
+        }
+    }
+else:
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+
+
+# --- Logging --------------------------------------------------------------
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'default': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'},
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'default'},
+    },
+    'root': {'handlers': ['console'], 'level': 'WARNING'},
+    'loggers': {
+        'accounts': {'level': os.getenv('LOG_LEVEL', 'INFO'), 'propagate': True},
+    },
+}

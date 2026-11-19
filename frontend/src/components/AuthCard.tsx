@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ui } from "../ui";
 
 interface Props {
   title: string;
@@ -9,11 +10,11 @@ interface Props {
 
 export default function AuthCard({ title, subtitle, children, footer }: Props) {
   return (
-    <main className="card">
-      <h1>{title}</h1>
-      {subtitle && <p className="muted">{subtitle}</p>}
-      <div className="auth-body">{children}</div>
-      {footer && <p className="auth-footer">{footer}</p>}
+    <main className={ui.card}>
+      <h1 className={ui.title}>{title}</h1>
+      {subtitle && <p className={ui.subtitle}>{subtitle}</p>}
+      <div className="mt-6">{children}</div>
+      {footer && <p className="mt-6 text-center text-[0.95rem] text-muted">{footer}</p>}
     </main>
   );
 }

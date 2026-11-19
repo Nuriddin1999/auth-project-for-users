@@ -1,11 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import { useAuthRedirect } from "../auth/useAuthRedirect";
 import AuthCard from "../components/AuthCard";
 import { authErrorMessage } from "../components/authErrors";
 import { isEmail } from "../validation";
 import type { VerifyState } from "./VerifyPage";
+import { ui } from "../ui";
 
 /** /forgot-password: email -> code on /verify -> /reset-password. */
 export default function ForgotPasswordPage() {
@@ -43,17 +44,17 @@ export default function ForgotPasswordPage() {
       footer={
         <>
           Remembered it?{" "}
-          <Link to="/login" state={{ email: email.trim(), from }}>
+          <Link className={ui.link} to="/login" state={{ email: email.trim(), from }}>
             Back to sign in
           </Link>
         </>
       }
     >
-      <form className="form" onSubmit={handleSubmit}>
-        <label className="field">
+      <form className={ui.form} onSubmit={handleSubmit}>
+        <label className={ui.field}>
           <span>Email</span>
           <input
-            className="input"
+            className={ui.input}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -66,12 +67,12 @@ export default function ForgotPasswordPage() {
         </label>
 
         {error && (
-          <p className="error" role="alert">
+          <p className={ui.error} role="alert">
             {error}
           </p>
         )}
 
-        <button className="btn btn-primary" type="submit" disabled={busy || !isEmail(email)}>
+        <button className={ui.primary} type="submit" disabled={busy || !isEmail(email)}>
           {busy ? "Sending code…" : "Send code"}
         </button>
       </form>

@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_FACEBOOK_GRAPH_VERSION?: string;
   readonly VITE_TELEGRAM_BOT_NAME?: string;
   readonly VITE_MOCK_AUTH?: string;
+  readonly VITE_FACEBOOK_EMAIL_FALLBACK?: string;
 }
 
 interface ImportMeta {

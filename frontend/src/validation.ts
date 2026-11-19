@@ -23,3 +23,11 @@ export function passwordLengthHint(password: string): string {
     ? `At least ${MIN_PASSWORD_LENGTH} characters (${MIN_PASSWORD_LENGTH - password.length} more)`
     : "";
 }
+
+/** Find the code in pasted text: a run of exactly `length` digits, else all digits if that's the right count. */
+export function extractCode(text: string, length: number): string {
+  const run = (text.match(/\d+/g) ?? []).find((digits) => digits.length === length);
+  if (run) return run;
+  const digits = text.replace(/\D/g, "");
+  return digits.length === length ? digits : "";
+}

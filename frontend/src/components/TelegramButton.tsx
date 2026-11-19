@@ -1,59 +1,56 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
+import { errorMessage } from "../api/client";
+import { useAuth } from "../auth/useAuth";
+import { useOpenAuthPage } from "../auth/useOpenAuthPage";
 import { config } from "../config";
-import type { ProviderButtonProps, TelegramUser } from "../types";
+import type { ProviderButtonProps } from "../types";
 import UnconfiguredButton from "./UnconfiguredButton";
-
-let counter = 0;
+import { ui } from "../ui";
 
 /**
- * Embeds the official Telegram Login Widget.
- * The widget only works on the domain registered for the bot via /setdomain
- * in @BotFather (localhost is not accepted - use a tunnel like ngrok in dev).
+ * "Continue with Telegram": opens our bot in Telegram (t.me/<bot>) and the /telegram page,
+ * where the user enters the code the bot sends. No username needed.
+ * Without a bot configured, falls back to test mode.
  */
-export default function TelegramButton({ onSuccess, onError }: ProviderButtonProps) {
-  const container = useRef<HTMLDivElement>(null);
-  const callbackRef = useRef(onSuccess);
-
-  useEffect(() => {
-    callbackRef.current = onSuccess;
-  }, [onSuccess]);
-
-  useEffect(() => {
-    const node = container.current;
-    if (!config.telegramBotName || !node) return;
-
-    const callbackName = `__onTelegramAuth${++counter}` as const;
-    window[callbackName] = (user: TelegramUser) => callbackRef.current(user);
-
-    const script = document.createElement("script");
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.async = true;
-    script.setAttribute("data-telegram-login", config.telegramBotName);
-    script.setAttribute("data-size", "large");
-    script.setAttribute("data-radius", "8");
-    script.setAttribute("data-request-access", "write");
-    script.setAttribute("data-onauth", `${callbackName}(user)`);
-    node.appendChild(script);
-
-    return () => {
-      delete window[callbackName];
-      node.innerHTML = "";
-    };
-  }, []);
+export default function TelegramButton({ onError }: ProviderButtonProps) {
+  const { startTelegramLogin } = useAuth();
+  const openAuthPage = useOpenAuthPage();
+  const [busy, setBusy] = useState(false);
 
   if (!config.telegramBotName) {
     return (
       <UnconfiguredButton
+        provider="telegram"
         name="Telegram"
         env="VITE_TELEGRAM_BOT_NAME"
-        provider="telegram"
         onError={onError}
-        className="btn-telegram"
+        className={ui.telegram}
         icon={<TelegramIcon />}
       />
     );
   }
-  return <div className="provider-slot" ref={container} />;
+
+  const handleClick = async () => {
+    // Open the tab right away, inside the click: tabs opened later are blocked as popups.
+    const tab = window.open("", "_blank");
+    setBusy(true);
+    try {
+      const login = await startTelegramLogin();
+      if (tab) tab.location.href = login.bot_link;
+      openAuthPage("/telegram", { login, tabOpened: Boolean(tab) });
+    } catch (err) {
+      tab?.close();
+      onError(errorMessage(err));
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button type="button" className={ui.telegram} onClick={handleClick} disabled={busy}>
+      <TelegramIcon />
+      {busy ? "Opening Telegram…" : "Continue with Telegram"}
+    </button>
+  );
 }
 
 function TelegramIcon() {

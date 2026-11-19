@@ -2,6 +2,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { config } from "../config";
 import type { ProviderButtonProps } from "../types";
 import UnconfiguredButton from "./UnconfiguredButton";
+import { ui } from "../ui";
 
 /** Renders Google's own button; returns a signed ID token (JWT) in `credential`. */
 export default function GoogleButton({ onSuccess, onError, text = "signin_with" }: ProviderButtonProps) {
@@ -12,14 +13,14 @@ export default function GoogleButton({ onSuccess, onError, text = "signin_with" 
         env="VITE_GOOGLE_CLIENT_ID"
         provider="google"
         onError={onError}
-        className="btn-google"
+        className={ui.google}
         icon={<GoogleIcon />}
       />
     );
   }
 
   return (
-    <div className="provider-slot">
+    <div className="flex min-h-10 justify-center">
       <GoogleLogin
         text={text}
         width="280"

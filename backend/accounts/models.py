@@ -53,3 +53,21 @@ class EmailCode(models.Model):
 
     def __str__(self):
         return f'{self.purpose} code for {self.email}'
+
+
+class TelegramChat(models.Model):
+    """A Telegram user who pressed Start in our bot, so the bot is allowed to message them.
+
+    Telegram bots can't write to someone by username alone; this table maps the
+    username (as reported by Telegram itself) to the private chat with the bot.
+    """
+
+    telegram_id = models.BigIntegerField(unique=True)
+    chat_id = models.BigIntegerField()
+    username = models.CharField(max_length=64, blank=True, db_index=True, help_text='Lowercase')
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'@{self.username or "-"} ({self.telegram_id})'

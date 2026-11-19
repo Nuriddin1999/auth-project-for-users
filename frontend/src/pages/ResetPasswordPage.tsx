@@ -1,11 +1,12 @@
 import { useCallback, useState, type FormEvent } from "react";
 import { Link, Navigate, useLocation, useNavigate, type Location } from "react-router-dom";
 import { errorCode, errorMessage } from "../api/client";
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth/useAuth";
 import AuthCard from "../components/AuthCard";
 import AuthSuccess from "../components/AuthSuccess";
 import PasswordInput from "../components/PasswordInput";
 import { MIN_PASSWORD_LENGTH, isNewPasswordValid, passwordLengthHint } from "../validation";
+import { ui } from "../ui";
 
 export interface ResetPasswordState {
   token: string;
@@ -53,7 +54,7 @@ export default function ResetPasswordPage() {
 
   return (
     <AuthCard title="Set a new password" subtitle={`For ${state.email}`}>
-      <form className="form" onSubmit={handleSubmit}>
+      <form className={ui.form} onSubmit={handleSubmit}>
         <PasswordInput
           label="New password"
           value={password}
@@ -65,7 +66,7 @@ export default function ResetPasswordPage() {
           autoFocus
           aria-invalid={Boolean(lengthHint)}
         />
-        {lengthHint && <p className="error field-error">{lengthHint}</p>}
+        {lengthHint && <p className={ui.fieldError}>{lengthHint}</p>}
         <PasswordInput
           label="Confirm new password"
           value={confirm}
@@ -75,20 +76,20 @@ export default function ResetPasswordPage() {
           aria-invalid={mismatch}
           required
         />
-        {mismatch && <p className="error field-error">Passwords do not match</p>}
+        {mismatch && <p className={ui.fieldError}>Passwords do not match</p>}
 
         {error && (
-          <p className="error" role="alert">
+          <p className={ui.error} role="alert">
             {error}{" "}
             {expired && (
-              <Link to="/forgot-password" state={{ email: state.email, from: state.from }}>
+              <Link className={ui.link} to="/forgot-password" state={{ email: state.email, from: state.from }}>
                 Request a new code
               </Link>
             )}
           </p>
         )}
 
-        <button className="btn btn-primary" type="submit" disabled={busy || !isNewPasswordValid(password, confirm)}>
+        <button className={ui.primary} type="submit" disabled={busy || !isNewPasswordValid(password, confirm)}>
           {busy ? "Saving…" : "Change password"}
         </button>
       </form>
