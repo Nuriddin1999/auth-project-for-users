@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Link } from "react-router-dom";
 import { errorMessage } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
 import ProviderButton from "../components/ProviderButton";
@@ -46,6 +47,15 @@ export default function ProfilePage() {
 
       <h2>Sign-in methods</h2>
       <ul className="accounts">
+        {user.email && (
+          <li>
+            <span className="account-name">Password</span>
+            <span className={user.has_password ? "badge" : "badge badge-muted"}>{user.has_password ? "Set" : "Not set"}</span>
+            <Link className="btn-link" to="/forgot-password" state={{ email: user.email, from: { pathname: "/" } }}>
+              {user.has_password ? "Change" : "Set password"}
+            </Link>
+          </li>
+        )}
         {PROVIDERS.map((p) => (
           <li key={p.id}>
             <span className="account-name">{p.name}</span>

@@ -14,6 +14,8 @@ export interface User {
   first_name: string;
   last_name: string;
   avatar_url: string;
+  /** False for accounts created via social login until a password is set. */
+  has_password: boolean;
   social_accounts: SocialAccount[];
   date_joined: string;
 }
@@ -39,7 +41,8 @@ export interface TelegramUser {
   hash: string;
 }
 
-export type MockPayload = { mock: true };
+/** Test mode, step 2: the email / Telegram username entered on /connect plus the code. */
+export type MockPayload = { mock: true; identity: string; code: string };
 
 export type LoginPayload = { credential: string } | { access_token: string } | TelegramUser | MockPayload;
 
@@ -50,4 +53,47 @@ export interface ProviderButtonProps {
   text?: "signin_with" | "signup_with" | "continue_with" | "signin";
   /** Facebook button label. */
   label?: string;
+}
+
+/** What an email code confirms. */
+export type EmailPurpose = "signup" | "reset";
+
+export interface SignUpData {
+  name: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+}
+
+/** Error body returned by the API. */
+export interface ApiErrorBody {
+  detail?: string;
+  /** Machine-readable reason, e.g. "account_exists", "account_not_found", "cooldown". */
+  code?: string;
+  retry_after?: number;
+  /** DRF field validation errors: { field: ["message"] }. */
+  [field: string]: unknown;
+}
+
+/** Response of /auth/email/signup/ and /auth/email/signin/. */
+export interface CodeSent {
+  detail: string;
+  /** Seconds the code stays valid. */
+  expires_in: number;
+  code_length: number;
+}
+
+/** Test mode, step 1: response after entering an email / Telegram username on /connect. */
+export interface MockCodeSent {
+  channel: "email" | "telegram";
+  identity: string;
+  expires_in: number;
+  code_length: number;
+}
+
+/** Response of /auth/email/verify/: the account exists now, but nobody is signed in. */
+export interface SignUpConfirmed {
+  detail: string;
+  email: string;
+  created: boolean;
 }

@@ -10,7 +10,7 @@ export default function GoogleButton({ onSuccess, onError, text = "signin_with" 
       <UnconfiguredButton
         name="Google"
         env="VITE_GOOGLE_CLIENT_ID"
-        onSuccess={onSuccess}
+        provider="google"
         onError={onError}
         className="btn-google"
         icon={<GoogleIcon />}

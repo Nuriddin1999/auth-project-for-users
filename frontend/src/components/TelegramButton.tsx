@@ -46,7 +46,7 @@ export default function TelegramButton({ onSuccess, onError }: ProviderButtonPro
       <UnconfiguredButton
         name="Telegram"
         env="VITE_TELEGRAM_BOT_NAME"
-        onSuccess={onSuccess}
+        provider="telegram"
         onError={onError}
         className="btn-telegram"
         icon={<TelegramIcon />}

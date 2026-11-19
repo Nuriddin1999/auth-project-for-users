@@ -44,7 +44,7 @@ export default function FacebookButton({ onSuccess, onError, label = "Continue w
       <UnconfiguredButton
         name="Facebook"
         env="VITE_FACEBOOK_APP_ID"
-        onSuccess={onSuccess}
+        provider="facebook"
         onError={onError}
         className="btn-facebook"
         icon={<FacebookIcon />}

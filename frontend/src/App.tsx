@@ -3,8 +3,13 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthContext";
 import { config } from "./config";
-import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
+import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
+import VerifyPage from "./pages/VerifyPage";
+import ConnectPage from "./pages/ConnectPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
@@ -25,7 +30,12 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/login" element={<SignInPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/verify" element={<VerifyPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/connect/:provider" element={<ConnectPage />} />
             <Route
               path="/"
               element={

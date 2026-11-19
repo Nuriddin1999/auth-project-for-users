@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { tokens } from "../auth/tokens";
 import { config } from "../config";
-import type { AccessToken } from "../types";
+import type { AccessToken, ApiErrorBody } from "../types";
 
 // withCredentials: send/receive the httpOnly refresh cookie on cross-origin calls.
 export const api = axios.create({ baseURL: config.apiUrl, withCredentials: true });
@@ -60,9 +60,25 @@ api.interceptors.response.use(
 );
 
 export function errorMessage(error: unknown): string {
-  if (axios.isAxiosError<{ detail?: string }>(error)) {
-    return error.response?.data?.detail || error.message;
+  if (axios.isAxiosError<ApiErrorBody>(error)) {
+    const data = error.response?.data;
+    if (data?.detail) return data.detail;
+    // DRF validation errors: { field: ["message", ...] } -> first message.
+    const fieldError = data && Object.values(data).find((v): v is string[] => Array.isArray(v) && typeof v[0] === "string");
+    if (fieldError) return fieldError[0];
+    if (!error.response) return "Cannot reach the server. Is the backend running?";
+    return error.message;
   }
   if (error instanceof Error) return error.message;
   return "Something went wrong";
+}
+
+/** Parsed API error body, if the error came from the API. */
+export function errorBody(error: unknown): ApiErrorBody | undefined {
+  return axios.isAxiosError<ApiErrorBody>(error) ? error.response?.data : undefined;
+}
+
+/** Machine-readable error code from the API, e.g. "account_exists". */
+export function errorCode(error: unknown): string | undefined {
+  return errorBody(error)?.code;
 }

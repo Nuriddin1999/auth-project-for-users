@@ -183,3 +183,251 @@ h2 {
   padding: 2px 8px;
   border-radius: 99px;
 }
+
+/* --- Sign in / sign up ------------------------------------------------ */
+:root {
+  --input-bg: #ffffff;
+  --success: #2e7d32;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --input-bg: #14161b;
+    --success: #66bb6a;
+  }
+}
+
+.text {
+  color: var(--text);
+}
+.auth-body {
+  margin-top: 24px;
+}
+.auth-body .providers {
+  margin-top: 0;
+}
+.auth-footer {
+  margin: 24px 0 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.form .error,
+.form .success {
+  margin: 0;
+}
+.success {
+  color: var(--success);
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+.input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+.input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+.input[aria-invalid="true"] {
+  border-color: var(--error);
+}
+.code-input {
+  font-size: 1.5rem;
+  letter-spacing: 0.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+}
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.form-row .btn-link {
+  margin: 0;
+  font: inherit;
+  font-size: 0.9rem;
+  border: 0;
+  cursor: pointer;
+}
+.btn-link:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.timer {
+  margin: -4px 0 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.timer-warn {
+  color: #d97706;
+}
+.timer-expired {
+  color: var(--error);
+}
+
+.success-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.success-screen p {
+  margin: 0;
+}
+.success-icon {
+  width: 64px;
+  height: 64px;
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.success-icon circle {
+  stroke-opacity: 0.3;
+}
+.success-icon path {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: draw-check 0.4s 0.1s ease-out forwards;
+}
+@keyframes draw-check {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .success-icon path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+.success-screen .btn-primary {
+  margin-top: 8px;
+}
+
+.input-prefix {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.input-prefix > span {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.input-prefix .input {
+  padding-left: 28px;
+}
+.btn-back {
+  margin-top: 0;
+}
+
+.input-with-action {
+  position: relative;
+  display: flex;
+}
+.input-with-action .input {
+  padding-right: 64px;
+}
+.input-action {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.input-action:hover {
+  background: var(--border);
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+.field-link {
+  margin-top: 6px;
+  text-align: right;
+  font-size: 0.9rem;
+}
+.form .field-error {
+  margin-top: -10px;
+  font-size: 0.85rem;
+}
+
+.badge-muted {
+  color: var(--muted);
+  background: var(--border);
+}
+
+.notice-success {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+}
