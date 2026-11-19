@@ -24,13 +24,13 @@
 
 ## Возможности
 
-| Страница | Что происходит |
-|---|---|
-| `/signup` | Имя, email, пароль и подтверждение → код на почту (`/verify`) → аккаунт создан → `/login` с подставленным email → вход |
-| `/login` | Email и пароль **или** Google / Facebook / Telegram; ссылка «Forgot password?» |
-| `/forgot-password` | Email → код на почту (`/verify`) → новый пароль (`/reset-password`) → вход |
-| `/telegram` | Вход через бота: кнопка в боте присылает код, код вводится на сайте |
-| `/` | Профиль: подключённые способы входа (подключить и отключить), пароль (задать и сменить), выход |
+| Страница           | Что происходит                                                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `/signup`          | Имя, email, пароль и подтверждение → код на почту (`/verify`) → аккаунт создан → `/login` с подставленным email → вход |
+| `/login`           | Email и пароль **или** Google / Facebook / Telegram; ссылка «Forgot password?»                                         |
+| `/forgot-password` | Email → код на почту (`/verify`) → новый пароль (`/reset-password`) → вход                                             |
+| `/telegram`        | Вход через бота: кнопка в боте присылает код, код вводится на сайте                                                    |
+| `/`                | Профиль: подключённые способы входа (подключить и отключить), пароль (задать и сменить), выход                         |
 
 - Соцсети регистрируют при первом входе и логинят при следующих, поэтому кнопки одинаковые
   на обеих страницах (ниже формы, как на большинстве сайтов).
@@ -80,31 +80,31 @@ Your code to finish signing up: 281632
 
 ### Backend (`backend/.env`)
 
-| Переменная | Назначение |
-|---|---|
-| `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS` | Стандартные настройки Django |
-| `CORS_ALLOWED_ORIGINS` | Адрес фронтенда (по умолчанию `http://localhost:5173`) |
-| `REDIS_URL` | Общий кеш для кодов и rate limit; пусто = кеш в памяти процесса |
-| `LOG_LEVEL` | Уровень логов приложения `accounts` (по умолчанию `INFO`) |
-| `GOOGLE_CLIENT_ID` | OAuth Client ID (Web) |
-| `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `FACEBOOK_GRAPH_VERSION` | Приложение Facebook |
-| `FACEBOOK_EMAIL_FALLBACK` | Временный вход «через Facebook» по email-коду, пока приложение не настроено |
-| `TELEGRAM_BOT_TOKEN` | Токен бота от @BotFather |
-| `TELEGRAM_WEBHOOK_SECRET` | Продакшен: включает webhook вместо опроса `getUpdates` |
-| `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_PORT`, `EMAIL_USE_SSL`, `DEFAULT_FROM_EMAIL` | SMTP; без `EMAIL_HOST` письма печатаются в консоль |
-| `EMAIL_CODE_TTL` | Срок жизни кода в секундах (по умолчанию 120) |
-| `EMAIL_TEST_CODE`, `SOCIAL_AUTH_MOCK` | Тестовые режимы, работают только при `DEBUG=True` |
+| Переменная                                                                                                  | Назначение                                                                  |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`                                                 | Стандартные настройки Django                                                |
+| `CORS_ALLOWED_ORIGINS`                                                                                      | Адрес фронтенда (по умолчанию `http://localhost:5173`)                      |
+| `REDIS_URL`                                                                                                 | Общий кеш для кодов и rate limit; пусто = кеш в памяти процесса             |
+| `LOG_LEVEL`                                                                                                 | Уровень логов приложения `accounts` (по умолчанию `INFO`)                   |
+| `GOOGLE_CLIENT_ID`                                                                                          | OAuth Client ID (Web)                                                       |
+| `FACEBOOK_APP_ID`, `FACEBOOK_APP_SECRET`, `FACEBOOK_GRAPH_VERSION`                                          | Приложение Facebook                                                         |
+| `FACEBOOK_EMAIL_FALLBACK`                                                                                   | Временный вход «через Facebook» по email-коду, пока приложение не настроено |
+| `TELEGRAM_BOT_TOKEN`                                                                                        | Токен бота от @BotFather                                                    |
+| `TELEGRAM_WEBHOOK_SECRET`                                                                                   | Продакшен: включает webhook вместо опроса `getUpdates`                      |
+| `EMAIL_HOST`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`, `EMAIL_PORT`, `EMAIL_USE_SSL`, `DEFAULT_FROM_EMAIL` | SMTP; без `EMAIL_HOST` письма печатаются в консоль                          |
+| `EMAIL_CODE_TTL`                                                                                            | Срок жизни кода в секундах (по умолчанию 120)                               |
+| `EMAIL_TEST_CODE`, `SOCIAL_AUTH_MOCK`                                                                       | Тестовые режимы, работают только при `DEBUG=True`                           |
 
 ### Frontend (`frontend/.env`)
 
-| Переменная | Назначение |
-|---|---|
-| `VITE_API_URL` | Адрес API (по умолчанию `http://localhost:8000/api`) |
-| `VITE_GOOGLE_CLIENT_ID` | Тот же Client ID, что и на бэкенде |
-| `VITE_FACEBOOK_APP_ID`, `VITE_FACEBOOK_GRAPH_VERSION` | Тот же App ID, что и на бэкенде |
-| `VITE_TELEGRAM_BOT_NAME` | Username бота без `@` |
-| `VITE_FACEBOOK_EMAIL_FALLBACK` | Пара к `FACEBOOK_EMAIL_FALLBACK` |
-| `VITE_MOCK_AUTH` | Пара к `SOCIAL_AUTH_MOCK` |
+| Переменная                                            | Назначение                                           |
+| ----------------------------------------------------- | ---------------------------------------------------- |
+| `VITE_API_URL`                                        | Адрес API (по умолчанию `http://localhost:8000/api`) |
+| `VITE_GOOGLE_CLIENT_ID`                               | Тот же Client ID, что и на бэкенде                   |
+| `VITE_FACEBOOK_APP_ID`, `VITE_FACEBOOK_GRAPH_VERSION` | Тот же App ID, что и на бэкенде                      |
+| `VITE_TELEGRAM_BOT_NAME`                              | Username бота без `@`                                |
+| `VITE_FACEBOOK_EMAIL_FALLBACK`                        | Пара к `FACEBOOK_EMAIL_FALLBACK`                     |
+| `VITE_MOCK_AUTH`                                      | Пара к `SOCIAL_AUTH_MOCK`                            |
 
 ### Реальная отправка писем (Gmail)
 
@@ -123,10 +123,10 @@ SendGrid, Mailgun.
 
 ### Тестовые режимы (только при `DEBUG=True`)
 
-| Режим | Как включить | Что делает |
-|---|---|---|
-| Тестовый код email | `EMAIL_TEST_CODE=12345` | Письма не отправляются, любой код подтверждения равен `12345` |
-| Имитация соцсетей | `SOCIAL_AUTH_MOCK=True` + `VITE_MOCK_AUTH=true` | Кнопки провайдеров **без ключей** открывают `/connect/<provider>`: Google и Facebook спрашивают email, Telegram спрашивает username, затем код `12345` |
+| Режим              | Как включить                                    | Что делает                                                                                                                                             |
+| ------------------ | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Тестовый код email | `EMAIL_TEST_CODE=12345`                         | Письма не отправляются, любой код подтверждения равен `12345`                                                                                          |
+| Имитация соцсетей  | `SOCIAL_AUTH_MOCK=True` + `VITE_MOCK_AUTH=true` | Кнопки провайдеров **без ключей** открывают `/connect/<provider>`: Google и Facebook спрашивают email, Telegram спрашивает username, затем код `12345` |
 
 При имитации ничего не отправляется. Дальше всё работает по-настоящему: пользователь создаётся,
 выдаются JWT, работают привязка и отвязка, refresh и logout. Как только у провайдера появляется
@@ -147,6 +147,7 @@ Reset:    {email}                                   ─▶ POST /password/reset/
 ```
 
 **Пароли**
+
 - Проверяются стандартными валидаторами Django: не короче 8 символов, не из списка частых,
   не только цифры, не похож на имя или email. Хранится только хеш (PBKDF2).
 - Аккаунт создаётся только после подтверждения email. До этого хеш пароля хранится рядом с кодом,
@@ -157,6 +158,7 @@ Reset:    {email}                                   ─▶ POST /password/reset/
   ответа, так что вход не раскрывает, какие email зарегистрированы.
 
 **Коды подтверждения**
+
 - 6 цифр из `secrets`, живут 2 минуты (`EMAIL_CODE_TTL`), одноразовые. В БД хранится только HMAC.
   Код регистрации не подходит для сброса пароля, и наоборот.
 - После 5 неверных попыток код сгорает. Новый код отменяет старый. Повторная отправка возможна
@@ -167,6 +169,7 @@ Reset:    {email}                                   ─▶ POST /password/reset/
   возвращает `404 account_not_found`. Фронтенд показывает ссылку на нужную страницу.
 
 **Сброс пароля**
+
 - После кода выдаётся подписанный `reset_token` на 10 минут. В нём отпечаток текущего хеша
   пароля, поэтому после смены пароля токен перестаёт работать.
 - После смены пароля все прежние сессии завершаются: refresh-токены попадают в blacklist.
@@ -183,10 +186,10 @@ Reset:    {email}                                   ─▶ POST /password/reset/
                                           └─ (5) access token в JSON + refresh token в httpOnly cookie
 ```
 
-| Провайдер | Что присылает фронтенд | Как проверяет бэкенд |
-|---|---|---|
-| Google | ID token (JWT) от Google Identity Services | Подпись по публичным ключам Google, `aud` = наш Client ID, `iss` |
-| Facebook | User access token из JS SDK | `debug_token`: токен валиден и выдан **нашему** приложению; профиль запрашивается с `appsecret_proof` |
+| Провайдер | Что присылает фронтенд                     | Как проверяет бэкенд                                                                                  |
+| --------- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Google    | ID token (JWT) от Google Identity Services | Подпись по публичным ключам Google, `aud` = наш Client ID, `iss`                                      |
+| Facebook  | User access token из JS SDK                | `debug_token`: токен валиден и выдан **нашему** приложению; профиль запрашивается с `appsecret_proof` |
 
 **Временная замена Facebook.** Пока приложение Facebook не настроено, можно включить
 `FACEBOOK_EMAIL_FALLBACK=True` и `VITE_FACEBOOK_EMAIL_FALLBACK=true`. Тогда «Continue with Facebook»
@@ -223,27 +226,27 @@ Reset:    {email}                                   ─▶ POST /password/reset/
 Интерактивная документация (Swagger, генерируется drf-spectacular):
 **http://localhost:8000/api/docs/**. Схема OpenAPI: `/api/schema/`.
 
-| Метод | URL | Описание |
-|---|---|---|
-| POST | `/api/auth/email/signup/` | `{name, email, password, password_confirm}` → код на почту |
-| POST | `/api/auth/email/verify/` | `{email, code}` → аккаунт создан (без входа) |
-| POST | `/api/auth/email/resend/` | `{email, purpose: "signup" \| "reset"}` → новый код |
-| POST | `/api/auth/login/` | `{email, password}` → сессия |
-| POST | `/api/auth/password/reset/` | `{email}` → код на почту |
-| POST | `/api/auth/password/reset/verify/` | `{email, code}` → `{reset_token}` |
-| POST | `/api/auth/password/reset/confirm/` | `{token, password, password_confirm}` → сессия |
-| POST | `/api/auth/google/` | `{credential}` → сессия |
-| POST | `/api/auth/facebook/` | `{access_token}` → сессия (замена: `{email}`, затем `{email, code}`) |
-| POST | `/api/auth/telegram/login/start/` | → `{token, bot_link, button_text, expires_in, code_length}` |
-| POST | `/api/auth/telegram/login/status/` | `{token}` → `{status: "active"}`, пока страница открыта; `410`, если истекла |
-| POST | `/api/auth/telegram/login/verify/` | `{token, code}` → сессия |
-| POST | `/api/auth/telegram/webhook/` | Продакшен: сообщения боту от Telegram (заголовок с секретом) |
-| POST | `/api/auth/telegram/` | Данные Telegram Login Widget → сессия |
-| POST | `/api/auth/token/refresh/` | Refresh из cookie → новый access (refresh ротируется) |
-| POST | `/api/auth/logout/` | Refresh из cookie → blacklist, cookie удаляется |
-| GET, PATCH | `/api/auth/me/` | Текущий пользователь |
-| DELETE | `/api/auth/social/<provider>/` | Отвязать провайдера |
-| GET | `/api/auth/providers/` | Какие провайдеры настроены |
+| Метод      | URL                                 | Описание                                                                     |
+| ---------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| POST       | `/api/auth/email/signup/`           | `{name, email, password, password_confirm}` → код на почту                   |
+| POST       | `/api/auth/email/verify/`           | `{email, code}` → аккаунт создан (без входа)                                 |
+| POST       | `/api/auth/email/resend/`           | `{email, purpose: "signup" \| "reset"}` → новый код                          |
+| POST       | `/api/auth/login/`                  | `{email, password}` → сессия                                                 |
+| POST       | `/api/auth/password/reset/`         | `{email}` → код на почту                                                     |
+| POST       | `/api/auth/password/reset/verify/`  | `{email, code}` → `{reset_token}`                                            |
+| POST       | `/api/auth/password/reset/confirm/` | `{token, password, password_confirm}` → сессия                               |
+| POST       | `/api/auth/google/`                 | `{credential}` → сессия                                                      |
+| POST       | `/api/auth/facebook/`               | `{access_token}` → сессия (замена: `{email}`, затем `{email, code}`)         |
+| POST       | `/api/auth/telegram/login/start/`   | → `{token, bot_link, button_text, expires_in, code_length}`                  |
+| POST       | `/api/auth/telegram/login/status/`  | `{token}` → `{status: "active"}`, пока страница открыта; `410`, если истекла |
+| POST       | `/api/auth/telegram/login/verify/`  | `{token, code}` → сессия                                                     |
+| POST       | `/api/auth/telegram/webhook/`       | Продакшен: сообщения боту от Telegram (заголовок с секретом)                 |
+| POST       | `/api/auth/telegram/`               | Данные Telegram Login Widget → сессия                                        |
+| POST       | `/api/auth/token/refresh/`          | Refresh из cookie → новый access (refresh ротируется)                        |
+| POST       | `/api/auth/logout/`                 | Refresh из cookie → blacklist, cookie удаляется                              |
+| GET, PATCH | `/api/auth/me/`                     | Текущий пользователь                                                         |
+| DELETE     | `/api/auth/social/<provider>/`      | Отвязать провайдера                                                          |
+| GET        | `/api/auth/providers/`              | Какие провайдеры настроены                                                   |
 
 **Сессия** — это ответ `{access, user, created}` (при `created: true` регистрация, HTTP 201)
 плюс refresh token в httpOnly cookie. Если запрос входа через провайдера приходит с access token,
@@ -255,8 +258,9 @@ Reset:    {email}                                   ─▶ POST /password/reset/
 что подписал провайдер. Бэкенд сам проверяет подпись или токен и лишь потом доверяет данным.
 
 **Хранение токенов**
-- *Access token* (15 мин) хранится только в памяти JS-модуля, не в `localStorage`.
-- *Refresh token* (7 дней) лежит в cookie `HttpOnly; SameSite=Lax; Path=/api/auth/`,
+
+- _Access token_ (15 мин) хранится только в памяти JS-модуля, не в `localStorage`.
+- _Refresh token_ (7 дней) лежит в cookie `HttpOnly; SameSite=Lax; Path=/api/auth/`,
   а вне DEBUG ещё и `Secure`. JavaScript, а значит и XSS, его прочитать не может.
 - После перезагрузки страницы сессия восстанавливается запросом `/token/refresh/`. При ответе
   `401` axios обновляет access token одним общим запросом, даже если упало несколько запросов сразу.
@@ -265,6 +269,7 @@ Reset:    {email}                                   ─▶ POST /password/reset/
 - Refresh ротируется при каждом использовании, старый попадает в blacklist.
 
 **Связывание аккаунтов**
+
 - Повторный вход тем же провайдером возвращает того же пользователя: пара
   `SocialAccount(provider, uid)` уникальна.
 - Совпадение email ведёт к объединению **только если провайдер подтвердил email**. Иначе можно
@@ -339,6 +344,7 @@ npm run build
 ```
 
 **Бэкенд.** Тесты проверяют:
+
 - проверку токена Facebook (ответы Graph API подменяются) и HMAC-подписи Telegram Login Widget;
 - вход через Google и связывание аккаунтов (проверка подписи Google подменяется);
 - коды и их лимиты, вход по паролю, сброс пароля;
@@ -355,22 +361,25 @@ GitHub Actions (`.github/workflows/ci.yml`) запускает все эти п�
 ## Получение ключей провайдеров
 
 ### Google
+
 1. https://console.cloud.google.com/ → APIs & Services → **OAuth consent screen**: настроить
-   и в *Test users* добавить свой аккаунт.
-2. Credentials → Create credentials → **OAuth client ID** → *Web application*.
-3. *Authorized JavaScript origins*: `http://localhost:5173` и `http://localhost`.
+   и в _Test users_ добавить свой аккаунт.
+2. Credentials → Create credentials → **OAuth client ID** → _Web application_.
+3. _Authorized JavaScript origins_: `http://localhost:5173` и `http://localhost`.
 4. Client ID → `GOOGLE_CLIENT_ID` (backend) и `VITE_GOOGLE_CLIENT_ID` (frontend). Secret не нужен.
 
 ### Facebook
-1. https://developers.facebook.com/apps → Create app → use case *Facebook Login*.
-2. Добавить разрешение `email`. В настройках Facebook Login, в поле *Allowed Domains for the
-   JavaScript SDK*, указать `localhost`.
+
+1. https://developers.facebook.com/apps → Create app → use case _Facebook Login_.
+2. Добавить разрешение `email`. В настройках Facebook Login, в поле _Allowed Domains for the
+   JavaScript SDK_, указать `localhost`.
 3. Settings → Basic: App ID → `FACEBOOK_APP_ID` и `VITE_FACEBOOK_APP_ID`,
    App Secret → `FACEBOOK_APP_SECRET` (**только backend**).
 4. В режиме Development войти могут только пользователи с ролью в приложении. Для продакшена
    нужен HTTPS.
 
 ### Telegram
+
 1. [@BotFather](https://t.me/BotFather): `/newbot` → токен → `TELEGRAM_BOT_TOKEN` (**только backend**).
 2. Username бота без `@` → `VITE_TELEGRAM_BOT_NAME`.
 
