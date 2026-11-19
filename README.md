@@ -1,7 +1,14 @@
-# Auth: Google / Telegram / Facebook
+# Auth: Google / Telegram / Facebook / Email
 
-Вход через социальные сети: **React + TypeScript (Vite)** на фронтенде,
-**Django REST Framework + JWT (SimpleJWT)** на бэкенде.
+Регистрация и вход через социальные сети и по email + паролю (email подтверждается кодом).
+**React + TypeScript (Vite)** на фронтенде, **Django REST Framework + JWT (SimpleJWT)** на бэкенде.
+
+| Страница | Что есть |
+|---|---|
+| `/signup` | имя, email, пароль, подтверждение → `/verify` (код) → аккаунт создан → `/login` (email подставлен) → вход; или Google / Facebook / Telegram |
+| `/login` | Google / Facebook / Telegram **или** email + пароль → вход; ссылка «Forgot password?» |
+| `/forgot-password` | email → `/verify` (код) → `/reset-password` (новый пароль) → вход |
+| `/` | профиль: способы входа (подключить/отключить), пароль (задать/сменить), выход |
 
 ## Быстрый старт
 
@@ -21,6 +28,45 @@ copy .env.example .env
 npm run dev
 ```
 
+### Тестовый код (без SMTP)
+
+```env
+# backend/.env (работает только при DEBUG=True)
+EMAIL_TEST_CODE=12345
+```
+
+Письма не отправляются, любой код подтверждения равен `12345`: при регистрации и при сбросе
+пароля на странице `/verify` введите `12345`. Уберите переменную, чтобы вернуть настоящие
+6-значные коды по почте. С `DEBUG=False` переменная игнорируется (покрыто тестом).
+
+### Где взять код из письма при разработке
+
+Если `EMAIL_HOST` не задан, письма не отправляются, а **печатаются в консоль `runserver`**:
+
+```
+Subject: 281632 is your verification code
+...
+Your code to finish signing up: 281632
+```
+
+### Реальная отправка писем (Gmail)
+
+1. Включите двухэтапную проверку в аккаунте Google.
+2. Создайте пароль приложения: https://myaccount.google.com/apppasswords (16 символов).
+3. В `backend/.env`:
+   ```env
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_HOST_USER=you@gmail.com
+   EMAIL_HOST_PASSWORD=abcdefghijklmnop   # пароль приложения, без пробелов
+   ```
+4. Перезапустите `runserver` и проверьте: `venv\Scripts\python manage.py sendtestemail you@gmail.com`.
+
+Подходит любой SMTP: Яндекс (`smtp.yandex.ru`, 465, `EMAIL_USE_SSL=True`), Mail.ru, SendGrid, Mailgun.
+Письмо отправляется **до** сохранения кода: если SMTP недоступен, API вернёт `503 email_failed`,
+код не сохранится, лимиты не потратятся, а предыдущий код продолжит работать. Таймаут SMTP: 10 с.
+
+В продакшене отправку стоит вынести в очередь (Celery/RQ), чтобы запрос не ждал SMTP.
+
 ### Тестовый режим (без ключей провайдеров)
 
 Чтобы проверить приложение, не регистрируя приложения в Google, Facebook и Telegram, включите:
@@ -32,17 +78,66 @@ SOCIAL_AUTH_MOCK=True
 VITE_MOCK_AUTH=true
 ```
 
-Кнопки провайдеров, для которых не заданы ключи, будут входить под тестовыми пользователями
-без обращения к провайдеру. Вся остальная логика настоящая: создание пользователя, JWT,
-привязка/отвязка аккаунтов, refresh, logout. Режим работает **только при `DEBUG=True`**:
-с выключенным DEBUG бэкенд отклоняет такие запросы (покрыто тестом).
+Кнопки провайдеров, для которых не заданы ключи, имитируют вход у провайдера:
 
-Тестовые профили Google и Facebook имеют одинаковый подтверждённый email, поэтому
-объединяются в одного пользователя, так видно, как работает связывание аккаунтов.
+- **Google / Facebook:** страница `/connect/google` просит email → «код отправлен» → ввод кода → «Authentication successful».
+- **Telegram:** просит Telegram username → «мы отправили вам сообщение с кодом в Telegram, подтвердите» → ввод кода → «Authentication successful».
+
+Код всегда `12345` (`SOCIAL_AUTH_MOCK_CODE`), действует 1 минуту, 5 неверных попыток сбрасывают проверку.
+**Ничего реально не отправляется:** это имитация, чтобы проверить интерфейс и логику без ключей.
+Дальше всё настоящее: создание пользователя, JWT, привязка/отвязка аккаунтов, refresh, logout.
+Режим работает **только при `DEBUG=True`**: с выключенным DEBUG бэкенд отклоняет такие запросы
+(покрыто тестом).
+
+Google и Facebook с одинаковым email объединяются в одного пользователя, так видно, как работает
+связывание аккаунтов. Если нажать кнопку в профиле, провайдер привяжется к текущему аккаунту.
 
 Как только для провайдера задан реальный ключ, его кнопка автоматически работает по-настоящему.
 
 ## Как это устроено
+
+### Email и пароль
+
+```
+Sign up:  {name, email, password, password_confirm} ─▶ POST /email/signup/  ─▶ письмо с кодом
+          {email, code}                             ─▶ POST /email/verify/  ─▶ аккаунт создан (без входа)
+Sign in:  {email, password}                         ─▶ POST /login/         ─▶ сессия
+Reset:    {email}                                   ─▶ POST /password/reset/          ─▶ письмо с кодом
+          {email, code}                             ─▶ POST /password/reset/verify/   ─▶ reset_token
+          {token, password, password_confirm}       ─▶ POST /password/reset/confirm/  ─▶ сессия
+```
+
+**Пароли**
+- Проверяются стандартными валидаторами Django: не короче 8 символов, не из списка частых,
+  не только цифры, не похож на имя/email. Хранятся только как хеш (PBKDF2).
+- После подтверждения кода вход **не выполняется**: пользователь попадает на `/login` с подставленным
+  email и входит паролем (подтверждение заодно проверяет, что пароль запомнен).
+- Аккаунт создаётся только после подтверждения email: до этого хеш пароля хранится рядом с кодом.
+  Повторная отправка кода (`/email/resend/`) берёт имя и пароль оттуда же, так что фронтенду
+  не нужно держать пароль у себя.
+- Неверный пароль и несуществующий email дают одинаковый ответ `401 Invalid email or password`
+  (и одинаковое время ответа), так что вход не раскрывает, какие email зарегистрированы.
+- Rate limit на вход: 10 попыток в минуту с IP.
+
+**Сброс пароля**
+- После кода выдаётся подписанный `reset_token`, живущий 10 минут. В нём отпечаток текущего
+  хеша пароля, поэтому после смены пароля токен перестаёт работать (одноразовый).
+- После смены пароля все прежние сессии завершаются (refresh-токены в blacklist).
+- Пользователь, зарегистрированный через соцсеть, может так же задать себе пароль.
+
+**Коды**
+- 6 цифр, `secrets`, живут 1 минуту (`EMAIL_CODE_TTL`), одноразовые; в БД хранится только HMAC (код + email).
+  Код регистрации нельзя использовать для сброса пароля и наоборот.
+- Ввод на отдельной странице `/verify` с обратным отсчётом; после истечения появляется «Resend code».
+- 5 неверных попыток → код сгорает; новый код отменяет старый.
+- Повторная отправка не чаще раза в 60 с (`429` + `Retry-After`), не больше 5 кодов в час на адрес.
+- Регистрация с занятым email → `409 account_exists`, сброс для неизвестного → `404 account_not_found`;
+  фронтенд показывает ссылку на нужную страницу.
+- Email, сохранённый у пользователя, всегда подтверждён (кодом или провайдером), поэтому
+  зарегистрированный по email пользователь, позже вошедший через Google с тем же адресом,
+  попадает в тот же аккаунт.
+
+### Соцсети
 
 ```
 Браузер ──(1) вход у провайдера──▶ Google / Facebook / Telegram
@@ -65,6 +160,13 @@ VITE_MOCK_AUTH=true
 
 | Метод | URL | Описание |
 |---|---|---|
+| POST | `/api/auth/login/` | `{email, password}` → сессия |
+| POST | `/api/auth/email/signup/` | `{name, email, password, password_confirm}` → отправить код |
+| POST | `/api/auth/email/verify/` | `{email, code}` → аккаунт создан; входа нет, дальше `/login/` |
+| POST | `/api/auth/email/resend/` | `{email, purpose: "signup"\|"reset"}` → новый код |
+| POST | `/api/auth/password/reset/` | `{email}` → отправить код |
+| POST | `/api/auth/password/reset/verify/` | `{email, code}` → `{reset_token}` |
+| POST | `/api/auth/password/reset/confirm/` | `{token, password, password_confirm}` → сессия |
 | POST | `/api/auth/google/` | `{credential}` |
 | POST | `/api/auth/facebook/` | `{access_token}` |
 | POST | `/api/auth/telegram/` | объект `user` из Telegram widget без изменений |
@@ -74,7 +176,9 @@ VITE_MOCK_AUTH=true
 | DELETE | `/api/auth/social/<provider>/` | отвязать провайдера |
 | GET | `/api/auth/providers/` | какие провайдеры настроены |
 
-Ответ на вход: `{access, user, created}`, refresh token приходит только в cookie.
+Ответ на любой вход: `{access, user, created}` (`created: true` = регистрация, HTTP 201),
+refresh token приходит только в cookie. Соцсети регистрируют при первом входе и логинят при следующих,
+поэтому их кнопки одинаковые на обеих страницах.
 
 ## Архитектурные решения
 
@@ -99,7 +203,8 @@ VITE_MOCK_AUTH=true
   `email_verified`, Facebook отдаёт только подтверждённые). Иначе можно было бы захватить
   чужой аккаунт, зарегистрировавшись у провайдера с чужим email.
 - Нельзя привязать аккаунт, уже привязанный к другому пользователю (409), и нельзя
-  отвязать последний способ входа (400).
+  отвязать последний способ входа (400). Email считается способом входа: пользователь с email
+  может отвязать все соцсети.
 
 **Прочее.** Rate limit на эндпоинты входа (30/мин с IP); пользователь и социальный аккаунт
 создаются в одной транзакции; гонка при одновременной привязке обрабатывается через
@@ -112,16 +217,18 @@ backend/
   config/settings.py        настройки, всё секретное — из .env
   accounts/
     providers.py            проверка Google / Facebook / Telegram (+ тестовые профили)
+    email_codes.py          email-коды (регистрация, сброс пароля), лимиты
+    password_auth.py        вход по паролю, сброс пароля
     services.py             поиск / создание / связывание пользователя, выдача JWT
     cookies.py              httpOnly refresh cookie
     views.py, urls.py       API
-    models.py               SocialAccount
+    models.py               SocialAccount, EmailCode
     tests.py                тесты
 frontend/src/
   api/client.ts             axios: access token, авто-refresh при 401
   auth/                     AuthContext, хранение access token в памяти
-  components/               кнопки провайдеров
-  pages/                    вход, профиль (привязка/отвязка способов входа)
+  components/               кнопки провайдеров, форма email, ввод кода
+  pages/                    Sign in, Sign up, Verify, Forgot/Reset password, Connect, профиль
   types.ts                  типы API
 ```
 
@@ -129,7 +236,7 @@ frontend/src/
 
 ```bash
 # backend
-venv\Scripts\python manage.py test accounts   # 22 теста
+venv\Scripts\python manage.py test accounts   # 63 теста
 venv\Scripts\ruff check . && venv\Scripts\ruff format --check .
 
 # frontend
@@ -168,4 +275,5 @@ npm run build                                  # включает проверк
 - HTTPS (cookie получит флаг `Secure` автоматически).
 - Фронтенд и API на одном сайте (например `example.com` и `api.example.com`), иначе
   `SameSite=Lax` cookie не будет отправляться; для разных сайтов нужен `SameSite=None` + CSRF-токен.
+- SMTP для писем (`EMAIL_HOST` и т.д.).
 - PostgreSQL вместо SQLite.

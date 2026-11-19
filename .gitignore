@@ -2,3 +2,6 @@
 .vscode/
 .idea/
 .DS_Store
+
+# Personal notes, not part of the solution
+Auth_Project_Guide.pdf
