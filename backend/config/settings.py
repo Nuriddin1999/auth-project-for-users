@@ -129,6 +129,47 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 # Telegram login payloads older than this (seconds) are rejected (replay protection).
 TELEGRAM_AUTH_MAX_AGE = int(os.getenv('TELEGRAM_AUTH_MAX_AGE', '86400'))
 
+# --- Email sign-up / sign-in (one-time codes) ---------------------------
+EMAIL_CODE_TTL = int(os.getenv('EMAIL_CODE_TTL') or 60)  # seconds a code stays valid
+EMAIL_CODE_LENGTH = 6
+# Development only (ignored unless DEBUG): every code is this value and no email is sent.
+# Lets you sign up without a working SMTP server. Example: EMAIL_TEST_CODE=12345
+EMAIL_TEST_CODE = os.getenv('EMAIL_TEST_CODE', '').strip()
+EMAIL_CODE_RESEND_COOLDOWN = 60  # seconds before a new code can be requested
+EMAIL_CODE_MAX_PER_HOUR = 5  # codes per email address per hour
+EMAIL_CODE_MAX_ATTEMPTS = 5  # wrong guesses before a code is burned
+
+# Without EMAIL_HOST, emails are printed to the runserver console (development).
+_smtp_host = os.getenv('EMAIL_HOST', '')
+_smtp_user = os.getenv('EMAIL_HOST_USER', '')
+# Most providers (Gmail, Yandex, Mail.ru) require "From" to be the authenticated account.
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL') or (
+    f'Auth <{_smtp_user}>' if _smtp_user else 'Auth <no-reply@localhost>'
+)
+
+if _smtp_host:
+    _ssl = os.getenv('EMAIL_USE_SSL', 'False').lower() in ('1', 'true', 'yes')
+    MAILERS = {
+        'default': {
+            'BACKEND': 'django.core.mail.backends.smtp.EmailBackend',
+            'OPTIONS': {
+                'host': _smtp_host,
+                'port': int(os.getenv('EMAIL_PORT') or (465 if _ssl else 587)),
+                'username': _smtp_user,
+                'password': os.getenv('EMAIL_HOST_PASSWORD', ''),
+                'use_ssl': _ssl,  # port 465
+                'use_tls': not _ssl
+                and os.getenv('EMAIL_USE_TLS', 'True').lower() in ('1', 'true', 'yes'),  # 587
+                'timeout': 10,  # don't hang the request if the SMTP server is slow
+            },
+        },
+    }
+else:
+    MAILERS = {'default': {'BACKEND': 'django.core.mail.backends.console.EmailBackend'}}
+
+
 # Test mode: accept {"mock": true} on the login endpoints and sign in fake users
 # WITHOUT contacting the providers. Only ever active together with DEBUG.
 SOCIAL_AUTH_MOCK = DEBUG and os.getenv('SOCIAL_AUTH_MOCK', 'False').lower() in ('1', 'true', 'yes')
+# Code that "confirms" a social login in test mode (nothing is really sent).
+SOCIAL_AUTH_MOCK_CODE = os.getenv('SOCIAL_AUTH_MOCK_CODE') or '12345'

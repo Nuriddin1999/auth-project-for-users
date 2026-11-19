@@ -13,7 +13,7 @@ class AccountConflict(ProviderError):
     pass
 
 
-def _unique_username(hint: str, provider: str, uid: str) -> str:
+def unique_username(hint: str, provider: str, uid: str) -> str:
     base = slugify(hint)[:120] or f'{provider}_{uid}'[:120]
     username, n = base, 1
     while User.objects.filter(username=username).exists():
@@ -52,7 +52,7 @@ def resolve_user(profile: SocialProfile, current_user=None):
 
     if user is None:
         user = User(
-            username=_unique_username(profile.username_hint, profile.provider, profile.uid),
+            username=unique_username(profile.username_hint, profile.provider, profile.uid),
             email=profile.email if profile.email_verified else '',
             first_name=profile.first_name[:150],
             last_name=profile.last_name[:150],

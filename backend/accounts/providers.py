@@ -133,46 +133,6 @@ def verify_facebook(access_token: str) -> SocialProfile:
     )
 
 
-# --- Test mode ------------------------------------------------------------
-
-MOCK_PROFILES = {
-    # Google and Facebook share a verified email, so they merge into one user,
-    # which demonstrates account linking. Telegram never provides an email.
-    'google': dict(
-        uid='mock-google-1',
-        email='test.user@example.com',
-        email_verified=True,
-        first_name='Test',
-        last_name='Google',
-        username_hint='test_google',
-    ),
-    'facebook': dict(
-        uid='mock-facebook-1',
-        email='test.user@example.com',
-        email_verified=True,
-        first_name='Test',
-        last_name='Facebook',
-        username_hint='test_facebook',
-    ),
-    'telegram': dict(
-        uid='mock-telegram-1',
-        first_name='Test',
-        last_name='Telegram',
-        username_hint='test_telegram',
-        extra={'username': 'test_telegram'},
-    ),
-}
-
-
-def mock_profile(provider: str) -> SocialProfile:
-    """Fake, unverified profile for local development (SOCIAL_AUTH_MOCK)."""
-    if not (settings.DEBUG and settings.SOCIAL_AUTH_MOCK):
-        raise ProviderError('Test mode is disabled')
-    data = dict(MOCK_PROFILES[provider])
-    data['extra'] = {**data.get('extra', {}), 'mock': True}
-    return SocialProfile(provider=provider, **data)
-
-
 # --- Telegram -------------------------------------------------------------
 
 TELEGRAM_FIELDS = ('id', 'first_name', 'last_name', 'username', 'photo_url', 'auth_date')

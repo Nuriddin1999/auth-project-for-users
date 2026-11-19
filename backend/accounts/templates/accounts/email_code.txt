@@ -1,0 +1,8 @@
+{% if is_signup %}Hi{% if name %} {{ name }}{% endif %}! Welcome aboard.
+
+Your code to finish signing up: {{ code }}{% elif is_reset %}We received a request to reset your password.
+
+Your code to reset the password: {{ code }}{% else %}Your verification code: {{ code }}{% endif %}
+
+It expires in {{ minutes }} minute{{ minutes|pluralize }}.
+If you didn't request this code, you can safely ignore this email.

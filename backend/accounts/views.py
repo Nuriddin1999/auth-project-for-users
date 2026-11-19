@@ -9,12 +9,19 @@ from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from . import providers
+from . import email_codes, mock_social, password_auth, providers
 from .cookies import clear_refresh_cookie, get_refresh_cookie, set_refresh_cookie
-from .models import SocialAccount
+from .models import EmailCode, SocialAccount
 from .serializers import (
+    EmailResendSerializer,
+    EmailSignUpSerializer,
+    EmailVerifySerializer,
     FacebookLoginSerializer,
     GoogleLoginSerializer,
+    LoginSerializer,
+    MockSocialSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     TelegramLoginSerializer,
     UserSerializer,
 )
@@ -22,6 +29,7 @@ from .services import AccountConflict, issue_tokens, resolve_user
 
 
 class SocialLoginThrottle(AnonRateThrottle):
+    scope = 'social_login'  # own counter; the default 'anon' scope is shared
     rate = '30/min'
 
 
@@ -42,14 +50,23 @@ class BaseSocialLoginView(APIView):
     def verify(self, data):
         raise NotImplementedError
 
+    @staticmethod
+    def is_mock(request):
+        return settings.SOCIAL_AUTH_MOCK and request.data.get('mock') is True
+
     def get_profile(self, request):
-        if settings.SOCIAL_AUTH_MOCK and request.data.get('mock') is True:
-            return providers.mock_profile(self.provider)
+        if self.is_mock(request):
+            # Test mode, step 2: identity + code -> profile.
+            data = MockSocialSerializer(data=request.data)
+            data.is_valid(raise_exception=True)
+            return mock_social.verify(self.provider, **data.validated_data)
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         return self.verify(serializer.validated_data)
 
     def post(self, request):
+        if self.is_mock(request) and 'code' not in request.data:
+            return self.mock_start(request)
         try:
             profile = self.get_profile(request)
             current = request.user if request.user.is_authenticated else None
@@ -61,17 +78,30 @@ class BaseSocialLoginView(APIView):
         except providers.ProviderError as exc:
             return Response({'detail': str(exc)}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if not user.is_active:
-            return Response({'detail': 'User is disabled'}, status=status.HTTP_403_FORBIDDEN)
+        return login_response(user, created)
 
-        update_last_login(None, user)
-        tokens = issue_tokens(user)
-        response = Response(
-            {'access': tokens['access'], 'user': UserSerializer(user).data, 'created': created},
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-        set_refresh_cookie(response, tokens['refresh'])
-        return response
+    def mock_start(self, request):
+        """Test mode, step 1: {mock, identity} -> pretend a code was sent."""
+        identity = str(request.data.get('identity', ''))
+        try:
+            return Response(mock_social.start(self.provider, identity))
+        except providers.ProviderError as exc:
+            return Response({'detail': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def login_response(user, created):
+    """Common success response for every sign-in method."""
+    if not user.is_active:
+        return Response({'detail': 'User is disabled'}, status=status.HTTP_403_FORBIDDEN)
+
+    update_last_login(None, user)
+    tokens = issue_tokens(user)
+    response = Response(
+        {'access': tokens['access'], 'user': UserSerializer(user).data, 'created': created},
+        status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+    )
+    set_refresh_cookie(response, tokens['refresh'])
+    return response
 
 
 class GoogleLoginView(BaseSocialLoginView):
@@ -135,7 +165,8 @@ class DisconnectSocialView(APIView):
         if account is None:
             return Response({'detail': 'Not linked'}, status=status.HTTP_404_NOT_FOUND)
         others = SocialAccount.objects.filter(user=user).exclude(pk=account.pk).exists()
-        if not others and not user.has_usable_password():
+        # A stored email is always verified, so the user can still sign in with an email code.
+        if not others and not user.email and not user.has_usable_password():
             return Response(
                 {'detail': 'Cannot remove the only way to sign in'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -186,3 +217,130 @@ class LogoutView(APIView):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         clear_refresh_cookie(response)
         return response
+
+
+class EmailCodeThrottle(AnonRateThrottle):
+    scope = 'email_code'  # own counter; the default 'anon' scope is shared
+    rate = '20/min'
+
+
+class EmailCodeBaseView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+    throttle_classes = (EmailCodeThrottle,)
+
+    @staticmethod
+    def error_response(exc):
+        response = Response({'detail': str(exc), 'code': exc.code, **exc.extra}, status=exc.status)
+        if 'retry_after' in exc.extra:
+            response['Retry-After'] = str(exc.extra['retry_after'])
+        return response
+
+
+class EmailSignUpView(EmailCodeBaseView):
+    """Sign up, step 1: {name, email, password, password_confirm} -> code sent to the email."""
+
+    def post(self, request):
+        serializer = EmailSignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            sent = email_codes.request_code(
+                purpose=EmailCode.Purpose.SIGNUP, **serializer.validated_data
+            )
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return Response({'detail': 'Code sent', **sent})
+
+
+class EmailVerifyView(EmailCodeBaseView):
+    """Sign up, step 2: {email, code} -> account created.
+
+    Deliberately does NOT sign the user in: after registration they sign in with
+    their email and password (no tokens, no refresh cookie here).
+    """
+
+    def post(self, request):
+        serializer = EmailVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user, created = email_codes.verify_signup(**serializer.validated_data)
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return Response(
+            {'detail': 'Account created', 'email': user.email, 'created': created},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+
+class EmailResendView(EmailCodeBaseView):
+    """{email, purpose} -> a new code for a pending sign up or password reset."""
+
+    def post(self, request):
+        serializer = EmailResendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            sent = email_codes.resend_code(**serializer.validated_data)
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return Response({'detail': 'Code sent', **sent})
+
+
+class LoginThrottle(AnonRateThrottle):
+    scope = 'password_login'  # own counter; the default 'anon' scope is shared
+    rate = '10/min'
+
+
+class LoginView(EmailCodeBaseView):
+    """{email, password} -> {access, user, created} + refresh cookie."""
+
+    throttle_classes = (LoginThrottle,)
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user = password_auth.authenticate(**serializer.validated_data)
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return login_response(user, created=False)
+
+
+class PasswordResetRequestView(EmailCodeBaseView):
+    """Forgot password, step 1: {email} -> code sent to the email."""
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            sent = email_codes.request_code(
+                purpose=EmailCode.Purpose.RESET, **serializer.validated_data
+            )
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return Response({'detail': 'Code sent', **sent})
+
+
+class PasswordResetVerifyView(EmailCodeBaseView):
+    """Forgot password, step 2: {email, code} -> {reset_token}."""
+
+    def post(self, request):
+        serializer = EmailVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            token = password_auth.verify_reset_code(**serializer.validated_data)
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return Response({'reset_token': token})
+
+
+class PasswordResetConfirmView(EmailCodeBaseView):
+    """Forgot password, step 3: {token, password, password_confirm} -> signed in."""
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            user = password_auth.reset_password(**serializer.validated_data)
+        except email_codes.EmailCodeError as exc:
+            return self.error_response(exc)
+        return login_response(user, created=False)
